@@ -5,7 +5,7 @@ function get() {
   console.log("Called GET", key);
   // Read and log db.json
   try {
-    const passwordsJSON = fs.readFileSync("db.json", "utf8");
+    const passwordsJSON = fs.readFileSync("./db.json", "utf8");
     const passwords = JSON.parse(passwordsJSON);
     console.log(key, passwords[key]);
   } catch (error) {
@@ -16,9 +16,21 @@ function get() {
 
 function set() {
   console.log("Called SET", key, value);
-  // Read db.json
-  // Update value by key
-  // Write db.json
+
+  try {
+    // Read db.json
+    const passwordsJSON = fs.readFileSync("./db.json", "utf8");
+    const passwords = JSON.parse(passwordsJSON);
+
+    // Update value by key
+    passwords[key] = value;
+    console.log(key, passwords[key]);
+
+    // Write db.json
+    fs.writeFileSync("./db.json", JSON.stringify(passwords, null, 10));
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 if (command === "get") {
