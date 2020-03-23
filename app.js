@@ -1,10 +1,11 @@
 const [command, key, value] = process.argv.slice(2);
+const { read, write } = require("./lib/passwords");
 
 function get() {
   console.log("Called GET", key);
   // Read and log db.json
   try {
-    const passwords = readPasswords();
+    const passwords = read();
     console.log(key, passwords[key]);
   } catch (error) {
     console.error(error);
@@ -17,11 +18,11 @@ function set() {
 
   try {
     // Read db.json
-    const passwords = readPasswords();
+    const passwords = read();
     // Update value by key
     passwords[key] = value;
     // Write db.json
-    writePasswords();
+    write(passwords);
     console.log(key, passwords[key]);
   } catch (error) {
     console.error(error);
@@ -30,11 +31,11 @@ function set() {
 
 function unset() {
   // Read db.json
-  const passwords = readPasswords();
+  const passwords = read();
   //Remove value by key
   delete passwords[key];
   // Write db.json
-  writePasswords();
+  write(passwords);
   console.log(passwords);
 }
 
