@@ -1,18 +1,27 @@
-const { get, set, unset } = require("./lib/commands");
-const { askForPassword } = require("./lib/questions");
+const { get, set, unset } = require('./lib/commands');
+const { askForPassword, askForMasterPassword } = require('./lib/questions');
+const { readMasterPassword } = require('.lib/passwords');
 
 const [command, key] = process.argv.slice(2);
 
 async function run() {
-  if (command === "get") {
+  const answeredMasterPassword = await askForMasterPassword();
+  const masterPassword = readMasterPassword();
+
+  if (answeredMasterPassword !== masterPassword) {
+    console.error('Fuck off');
+    return;
+  }
+
+  if (command === 'get') {
     get(key);
-  } else if (command === "set") {
+  } else if (command === 'set') {
     const password = await askForPassword(key);
     set(key, password);
-  } else if (command === "unset") {
+  } else if (command === 'unset') {
     unset(key);
   } else {
-    console.error("Unkown command");
+    console.error('Unkown command');
   }
 }
 run();
