@@ -1,39 +1,69 @@
-const { get, set, unset, reset } = require('./lib/commands');
-const { askForPassword, askForMasterPassword } = require('./lib/questions');
-const { readMasterPassword } = require('.lib/passwords');
+const {
+  get,
+  set,
+  unset,
+  reset,
+  changeMasterPassword,
+} = require('./lib/commands');
+const {
+  askForPassword,
+  askForMasterPassword,
+  askQuestion,
+} = require('./lib/questions');
+const { getMasterPassword } = require('./lib/queries');
 const { verifyHash } = require('./lib/crypto');
+const { connect, close } = require('./lib/db');
 const [command, key] = process.argv.slice(2);
 
 async function run() {
   // we need a new command to set a new master password
   //this command will read the password and save the hash in db.json
 
-  const answeredMasterPassword = await askForMasterPassword();
+  try {
+    // Connect with db
+    await connect();
+    const answeredMasterPassword = await askForMasterPassword();
 
-  if (command === 'reset') {
-    return reset(answeredMasterPassword);
-  }
+    if (command === 'reset') {
+      return reset(answeredMasterPassword);
+    }
 
-  const masterPassword = readMasterPassword();
+    if (command === 'change') {
+      const answer = await askQuestion(
+        'Are you sure you want to change your master password? (y/n)'
+      );
+      if (answer !== 'y') {
+        return;
+      }
 
-  //masterpassword should be the hash of the original password
-  //we need to hash the answered master password too
-  // and then we can compare both hashes
+      const newMasterPassword = await askQuestion(
+        'Please enter new master password:'
+      );
+      return changeMasterPassword(newMasterPassword);
+    }
 
-  if (!verifyHash(answeredMasterPassword !== masterPassword)) {
-    console.error('Fuck off');
-    return;
-  }
+    const masterPassword = await getMasterPassword();
 
-  if (command === 'get') {
-    get(key);
-  } else if (command === 'set') {
-    const password = await askForPassword(key);
-    set(key, password);
-  } else if (command === 'unset') {
-    unset(key);
-  } else {
-    console.error('Unkown command');
+    if (!verifyHash(answeredMasterPassword, masterPassword)) {
+      console.error('Fuck off!');
+      return;
+    }
+
+    if (command === 'get') {
+      get(key, masterPassword);
+    } else if (command === 'set') {
+      const password = await askForPassword(key);
+      set(key, password, masterPassword);
+    } else if (command === 'unset') {
+      unset(key);
+    } else {
+      console.error('Unknown command');
+    }
+  } catch (error) {
+    console.error(error);
+  } finally {
+    await close();
   }
 }
+
 run();
